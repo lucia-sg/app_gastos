@@ -42,3 +42,15 @@ export function escapeHTML(str){
   div.textContent = str==null? '': String(str);
   return div.innerHTML;
 }
+
+// Los <input type="number"> siempre usan el punto como separador decimal
+// (depende del idioma del navegador, no de la web). Estos helpers permiten
+// usar <input type="text" inputmode="decimal"> aceptando también la coma.
+export function parseInputValue(str){
+  if(str == null) return NaN;
+  return parseFloat(String(str).trim().replace(',', '.'));
+}
+export function toInputValue(n){
+  if(n === null || n === undefined || n === '') return '';
+  return String(n).replace('.', ',');
+}

@@ -1,6 +1,6 @@
 import { ICONS } from '../icons.js';
 import { state, saveState } from '../state.js';
-import { money, pctFmt, escapeHTML } from '../format.js';
+import { money, pctFmt, escapeHTML, toInputValue, parseInputValue } from '../format.js';
 import { totalAportado, lastValor, fundColor } from '../selectors.js';
 import { openAddFundModal } from '../modals.js';
 
@@ -63,11 +63,11 @@ export function renderInversion(){
   html += `<div class="section-head"><h2>Calculadora de interés compuesto</h2></div>`;
   html += `<div class="card">
     <div class="field-row">
-      <div class="field"><label>Capital inicial (€)</label><input type="number" id="calcInicial" value="${totalVal>0?Math.round(totalVal):Math.round(totalInv)}" min="0" step="50"></div>
-      <div class="field"><label>Aportación mensual (€)</label><input type="number" id="calcMensual" value="100" min="0" step="10"></div>
+      <div class="field"><label>Capital inicial (€)</label><input type="text" id="calcInicial" value="${toInputValue(totalVal>0?Math.round(totalVal):Math.round(totalInv))}" inputmode="decimal"></div>
+      <div class="field"><label>Aportación mensual (€)</label><input type="text" id="calcMensual" value="100" inputmode="decimal"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Rentabilidad anual (%)</label><input type="number" id="calcRent" value="6" min="0" step="0.1"></div>
+      <div class="field"><label>Rentabilidad anual (%)</label><input type="text" id="calcRent" value="6" inputmode="decimal"></div>
       <div class="field"><label>Años</label><input type="number" id="calcAnos" value="10" min="1" step="1"></div>
     </div>
     <button class="btn primary" id="calcBtn">Calcular proyección</button>
@@ -151,9 +151,9 @@ function drawEvolutionChart(){
 }
 
 function runCompoundCalc(){
-  const P = parseFloat(document.getElementById('calcInicial').value)||0;
-  const PMT = parseFloat(document.getElementById('calcMensual').value)||0;
-  const annualRate = parseFloat(document.getElementById('calcRent').value)||0;
+  const P = parseInputValue(document.getElementById('calcInicial').value)||0;
+  const PMT = parseInputValue(document.getElementById('calcMensual').value)||0;
+  const annualRate = parseInputValue(document.getElementById('calcRent').value)||0;
   const years = parseInt(document.getElementById('calcAnos').value)||0;
   const r = annualRate/100/12;
 

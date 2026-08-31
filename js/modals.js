@@ -1,6 +1,6 @@
 import { ICONS } from './icons.js';
 import { state, uid, saveState } from './state.js';
-import { todayISO, escapeHTML } from './format.js';
+import { todayISO, escapeHTML, parseInputValue, toInputValue } from './format.js';
 import { getArea } from './selectors.js';
 import { uiState, renderCurrentPage, toast } from './ui.js';
 import { renderAjustes } from './pages/ajustes.js';
@@ -49,7 +49,7 @@ export function openAddExpenseModal(){
       </div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Cantidad (€)</label><input type="number" id="expAmount" min="0" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+      <div class="field"><label>Cantidad (€)</label><input type="text" id="expAmount" placeholder="0,00" inputmode="decimal"></div>
       <div class="field"><label>Fecha</label><input type="date" id="expDate" value="${todayISO()}"></div>
     </div>
     <div class="field"><label>Nota (opcional)</label><input type="text" id="expNote" placeholder="p.ej. cena con amigas"></div>
@@ -70,7 +70,7 @@ export function openAddExpenseModal(){
         state.areas.push(area);
         areaId = area.id;
       }
-      const amount = parseFloat(document.getElementById('expAmount').value);
+      const amount = parseInputValue(document.getElementById('expAmount').value);
       const date = document.getElementById('expDate').value || todayISO();
       const note = document.getElementById('expNote').value.trim();
       if(!areaId){ alert('Elige o crea un área.'); return; }
@@ -88,12 +88,12 @@ export function openAddExpenseModal(){
 
 export function openIncomeModal(){
   const bodyHTML = `
-    <div class="field"><label>Nómina neta al mes (€)</label><input type="number" id="incomeModalInput" value="${state.income||''}" min="0" step="10" autofocus></div>
+    <div class="field"><label>Nómina neta al mes (€)</label><input type="text" id="incomeModalInput" value="${toInputValue(state.income||'')}" inputmode="decimal" autofocus></div>
     <button class="btn primary" id="saveIncomeBtn">Guardar</button>
   `;
   openModal('Ingreso mensual', bodyHTML, ()=>{
     document.getElementById('saveIncomeBtn').addEventListener('click', ()=>{
-      state.income = parseFloat(document.getElementById('incomeModalInput').value)||0;
+      state.income = parseInputValue(document.getElementById('incomeModalInput').value)||0;
       saveState();
       closeModal();
       renderCurrentPage();
@@ -156,7 +156,7 @@ export function openInvestMovementModal(){
       <select id="movFund">${state.funds.map(f=>`<option value="${f.id}">${escapeHTML(f.name)}</option>`).join('')}</select>
     </div>
     <div class="field-row">
-      <div class="field"><label id="movAmountLabel">Cantidad aportada (€)</label><input type="number" id="movAmount" min="0" step="1" inputmode="decimal"></div>
+      <div class="field"><label id="movAmountLabel">Cantidad aportada (€)</label><input type="text" id="movAmount" inputmode="decimal"></div>
       <div class="field"><label>Fecha</label><input type="date" id="movDate" value="${todayISO()}"></div>
     </div>
     <div class="hint-banner" id="movHint">${ICONS.info}<span>Registra cada aportación que hagas a tu fondo. Contará automáticamente dentro de tu presupuesto de <b>Inversión</b> del mes.</span></div>
@@ -181,7 +181,7 @@ export function openInvestMovementModal(){
     });
     document.getElementById('saveMovBtn').addEventListener('click', ()=>{
       const fundId = document.getElementById('movFund').value;
-      const amount = parseFloat(document.getElementById('movAmount').value);
+      const amount = parseInputValue(document.getElementById('movAmount').value);
       const date = document.getElementById('movDate').value || todayISO();
       if(!amount || amount<=0){ alert('Introduce una cantidad válida.'); return; }
       state.movements.push({ id:uid(), fundId, date, type:mode, amount });

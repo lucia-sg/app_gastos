@@ -1,6 +1,6 @@
 import { ICONS, CAT_ICON, CAT_COLOR } from '../icons.js';
 import { state, saveState, resetState, replaceState } from '../state.js';
-import { money, todayISO, escapeHTML } from '../format.js';
+import { money, todayISO, escapeHTML, toInputValue, parseInputValue } from '../format.js';
 import { getCategory, getArea, categoryBudget } from '../selectors.js';
 import { renderCurrentPage, toast } from '../ui.js';
 import { openAddAreaModal } from '../modals.js';
@@ -13,22 +13,25 @@ export function renderAjustes(){
   html += `<div class="card">
     <div class="field" style="margin-bottom:0;">
       <label>Nómina neta al mes</label>
-      <input type="number" id="incomeInput" value="${state.income||''}" min="0" step="10" placeholder="0">
+      <input type="text" id="incomeInput" value="${toInputValue(state.income||'')}" inputmode="decimal" placeholder="0">
     </div>
   </div>`;
 
   html += `<div class="section-head"><h2>Reparto por categorías</h2></div>`;
-  const total = state.categories.reduce((s,c)=>s+Number(c.percent),0);
+  const total = roundPct(state.categories.reduce((s,c)=>s+Number(c.percent),0));
   html += `<div class="card">`;
   state.categories.forEach(cat=>{
     const col = CAT_COLOR[cat.id];
     html += `<div class="pct-row">
-      <div class="cat-icon" style="background:${col.bg}; color:${col.c};">${ICONS[CAT_ICON[cat.id]]}</div>
-      <div class="name">${cat.name}<div style="font-size:11.5px; color:var(--ink-faint); font-weight:500;">${money(categoryBudget(cat.id))} al mes</div></div>
-      <div class="pct-input"><input type="number" class="pctField" data-cat="${cat.id}" value="${cat.percent}" min="0" max="100" step="1"><span>%</span></div>
+      <div class="pct-row-top">
+        <div class="cat-icon" style="background:${col.bg}; color:${col.c};">${ICONS[CAT_ICON[cat.id]]}</div>
+        <div class="name">${cat.name}<div class="pct-amount" data-amount-for="${cat.id}">${money(categoryBudget(cat.id))} al mes</div></div>
+        <div class="pct-input"><input type="text" inputmode="decimal" class="pctField" data-cat="${cat.id}" value="${toInputValue(cat.percent)}"><span>%</span></div>
+      </div>
+      <input type="range" class="pct-slider" data-cat="${cat.id}" min="0" max="100" step="1" value="${Math.min(100,Math.max(0,Math.round(cat.percent)))}">
     </div>`;
   });
-  html += `<div class="pct-total ${total===100?'':'bad'}" id="pctTotal">Total repartido: ${total}%${total===100?'':' — debe sumar 100%'}</div>`;
+  html += `<div class="pct-total ${total===100?'':'bad'}" id="pctTotal">Total repartido: ${toInputValue(total)}%${total===100?'':' — debe sumar 100%'}</div>`;
   html += `<button class="btn primary" id="savePctBtn" style="margin-top:14px;" ${total===100?'':'disabled'}>Guardar reparto</button>`;
   html += `</div>`;
 
@@ -63,27 +66,54 @@ export function renderAjustes(){
 
 function bindAjustesEvents(){
   document.getElementById('incomeInput').addEventListener('change', (e)=>{
-    state.income = parseFloat(e.target.value)||0;
+    state.income = parseInputValue(e.target.value)||0;
     saveState();
     renderAjustes();
     toast('Ingreso actualizado');
   });
 
   const pctInputs = document.querySelectorAll('.pctField');
+  const pctSliders = document.querySelectorAll('.pct-slider');
+
+  function refreshTotal(){
+    let total = 0;
+    pctInputs.forEach(i=>total += (parseInputValue(i.value)||0));
+    total = roundPct(total);
+    const totalEl = document.getElementById('pctTotal');
+    totalEl.textContent = `Total repartido: ${toInputValue(total)}%` + (total===100?'':' — debe sumar 100%');
+    totalEl.classList.toggle('bad', total!==100);
+    document.getElementById('savePctBtn').disabled = total!==100;
+  }
+
+  function refreshAmount(catId, percent){
+    const amountEl = document.querySelector(`[data-amount-for="${catId}"]`);
+    if(amountEl) amountEl.textContent = `${money(state.income * (percent/100))} al mes`;
+  }
+
   pctInputs.forEach(inp=>{
     inp.addEventListener('input', ()=>{
-      let total = 0;
-      pctInputs.forEach(i=>total += (parseFloat(i.value)||0));
-      const totalEl = document.getElementById('pctTotal');
-      totalEl.textContent = `Total repartido: ${total}%` + (total===100?'':' — debe sumar 100%');
-      totalEl.classList.toggle('bad', total!==100);
-      document.getElementById('savePctBtn').disabled = total!==100;
+      const percent = parseInputValue(inp.value)||0;
+      const slider = document.querySelector(`.pct-slider[data-cat="${inp.dataset.cat}"]`);
+      if(slider) slider.value = Math.min(100, Math.max(0, Math.round(percent)));
+      refreshAmount(inp.dataset.cat, percent);
+      refreshTotal();
     });
   });
+
+  pctSliders.forEach(slider=>{
+    slider.addEventListener('input', ()=>{
+      const percent = Number(slider.value);
+      const field = document.querySelector(`.pctField[data-cat="${slider.dataset.cat}"]`);
+      if(field) field.value = toInputValue(percent);
+      refreshAmount(slider.dataset.cat, percent);
+      refreshTotal();
+    });
+  });
+
   document.getElementById('savePctBtn').addEventListener('click', ()=>{
     pctInputs.forEach(i=>{
       const cat = getCategory(i.dataset.cat);
-      cat.percent = Math.max(0, parseFloat(i.value)||0);
+      cat.percent = Math.max(0, parseInputValue(i.value)||0);
     });
     saveState();
     renderAjustes();
@@ -120,6 +150,11 @@ function bindAjustesEvents(){
       }
     }
   });
+}
+
+// evita que sumas de decimales (12.5 + 87.5) queden en 99.99999999999999 por coma flotante
+function roundPct(n){
+  return Math.round(n*100)/100;
 }
 
 function exportData(){

@@ -352,14 +352,19 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (min-width:640px){ .modal-handle{ display:none; } }
 
 /* ============ SETTINGS ============ */
-.pct-row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border-soft); }
+.pct-row{ padding:12px 0; border-bottom:1px solid var(--border-soft); }
 .pct-row:last-child{ border-bottom:none; }
+.pct-row-top{ display:flex; align-items:center; gap:12px; }
 .pct-row .cat-icon{ width:30px;height:30px; }
 .pct-row .cat-icon svg{ width:15px;height:15px; }
 .pct-row .name{ flex:1; font-size:14px; font-weight:600; }
+.pct-row .pct-amount{ font-size:11.5px; color:var(--ink-faint); font-weight:500; margin-top:2px; }
 .pct-row .pct-input{ display:flex; align-items:center; gap:4px; }
 .pct-row .pct-input input{
   width:52px; padding:8px; border-radius:10px; border:1.5px solid var(--border); text-align:center; font-weight:700;
+}
+.pct-slider{
+  width:100%; margin-top:10px; accent-color:var(--sage);
 }
 .pct-total{
   display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding:12px 14px;
