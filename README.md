@@ -28,7 +28,8 @@ app_gastos/
 
 El JavaScript usa módulos ES (`import`/`export`), por lo que necesita cargarse por http(s) —no funciona si abres `index.html` con doble clic (`file://`).
 
-- **GitHub Pages / hosting**: funciona directamente en la URL publicada.
+- **GitHub Pages / hosting**: funciona directamente en la URL publicada: https://lucia-sg.github.io/app_gastos/
+
 - **En local**: sirve la carpeta con un servidor estático antes de abrirla, por ejemplo:
   ```bash
   python3 -m http.server 8000
